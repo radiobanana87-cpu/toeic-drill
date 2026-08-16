@@ -1,0 +1,17 @@
+{
+  "name": "TOEIC S/A Drill — 154問 / 767語",
+  "short_name": "TOEIC Drill",
+  "description": "TSL 1.2 / NGSL 1.2 に基づくTOEIC頻出語767語の文脈ドリル",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F7F7F4",
+  "theme_color": "#F7F7F4",
+  "lang": "ja",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
