@@ -1,7 +1,7 @@
 {
-  "name": "TOEIC Drill — 読解 / 文法 / 特化",
+  "name": "TOEIC Drill — 読解 / 文法 / 特化 / Part 7",
   "short_name": "TOEIC Drill",
-  "description": "TOEIC頻出語767語の読解演習、Part 5文法200問、比較級・不可算名詞の特化演習",
+  "description": "TOEIC頻出語の読解演習、Part 5文法演習、比較級・不可算名詞の特化演習、Part 7シングルパッセージ演習",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
