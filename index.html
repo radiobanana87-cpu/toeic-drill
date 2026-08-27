@@ -510,7 +510,7 @@ function renderStart(){
       <span class="b-again" style="width:${pAgain}%"></span>
     </div>
     <div class="legend">
-      <span>覚えた <b>${c.done}</b></span>
+      <span>できた <b>${c.done}</b></span>
       <span>要復習 <b>${c.again}</b></span>
       <span>未着手 <b>${c.todo}</b></span>
     </div>
@@ -647,7 +647,7 @@ function renderMenu(){
   <section class="sect">
     <h2>問題一覧</h2>
     <div class="sheet-note">
-      <span>■ 覚えた ${c.done} ／ ▨ 要復習 ${c.again} ／ ○ 未着手 ${c.todo}</span>
+      <span>■ できた ${c.done} ／ ▨ 要復習 ${c.again} ／ ○ 未着手 ${c.todo}</span>
       <span>番号をタップでその問題へ</span>
     </div>
     ${groups}
@@ -869,7 +869,7 @@ function renderDrill(){
     <div class="reveal" id="rev" ${revealed ? '' : 'hidden'} ${noBorder ? 'style="border:0;margin:0;padding:0"' : ''}>
       ${c.reveal}
       <div class="actions">
-        <button class="btn ok" id="mDone">覚えた</button>
+        <button class="btn ok" id="mDone">できた</button>
         <button class="btn again" id="mAgain">要復習</button>
       </div>
     </div>
