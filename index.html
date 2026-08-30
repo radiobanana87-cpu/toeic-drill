@@ -345,12 +345,17 @@ footer{margin-top:36px;font-size:11.5px;color:var(--graphite-soft);line-height:1
   align-items:center;justify-content:center;gap:24px;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
   transition:opacity .4s ease}
 #splash.out{opacity:0;pointer-events:none}
+#splash.ready{cursor:pointer}
+.sp-tap{position:absolute;bottom:calc(48px + env(safe-area-inset-bottom));font:600 12px/1 var(--ui);letter-spacing:.14em;
+  color:var(--graphite-soft);opacity:0;transition:opacity .6s ease}
+#splash.ready .sp-tap{opacity:1;animation:spPulse 2.4s ease-in-out infinite}
+@keyframes spPulse{0%,100%{opacity:.45}50%{opacity:1}}
 .sp-mark{display:grid;grid-template-columns:repeat(9,1fr);gap:8px}
 .sp-mark i{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--gold);display:block;opacity:0;
-  animation:spDot .5s cubic-bezier(.2,.7,.3,1) calc(var(--i) * 110ms) both}
-.sp-mark i.f{animation:spDot .5s cubic-bezier(.2,.7,.3,1) calc(var(--i) * 110ms) both,spFill .35s ease-out calc(.95s + var(--i) * 60ms) forwards}
+  animation:spDot .8s cubic-bezier(.2,.7,.3,1) calc(var(--i) * 180ms) both}
+.sp-mark i.f{animation:spDot .8s cubic-bezier(.2,.7,.3,1) calc(var(--i) * 180ms) both,spFill .5s ease-out calc(1.5s + var(--i) * 90ms) forwards}
 .sp-ttl{font-family:var(--mono);font-size:13px;letter-spacing:.32em;text-transform:uppercase;color:var(--gold-deep);
-  font-weight:600;opacity:0;animation:spFade .5s ease-out .85s both;padding-left:.32em}
+  font-weight:600;opacity:0;animation:spFade .7s ease-out 1.4s both;padding-left:.32em}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}#splash{display:none}}
 </style>
 </head>
@@ -360,6 +365,7 @@ footer{margin-top:36px;font-size:11.5px;color:var(--graphite-soft);line-height:1
     <i class="f" style="--i:4;--dx:-96px"></i><i style="--i:3;--dx:-72px"></i><i style="--i:2;--dx:-48px"></i><i style="--i:1;--dx:-24px"></i><i class="f" style="--i:0;--dx:0px"></i><i style="--i:1;--dx:24px"></i><i style="--i:2;--dx:48px"></i><i style="--i:3;--dx:72px"></i><i class="f" style="--i:4;--dx:96px"></i>
   </div>
   <div class="sp-ttl">TOEIC Drill</div>
+  <div class="sp-tap">タップして始める</div>
 </div>
 <div class="wrap">
   <div class="appbar" id="appbar" hidden></div>
@@ -1149,15 +1155,27 @@ if('serviceWorker' in navigator){
   dismissSplash();
 })();
 
-/* 起動アニメーションが最低 1.5 秒表示されてから、ホーム画面へフェードで切り替える */
+/* 起動アニメーションが終わったらタップ待ちにし、タップでホーム画面へフェードで切り替える */
 function dismissSplash(){
   const sp = document.getElementById('splash');
   if(!sp) return;
   const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const wait = reduce ? 0 : Math.max(0, 1500 - (performance.now() - SPLASH_T0));
-  setTimeout(() => {
+  const ANIM = 2600;  // 点の広がり＋文字の表示にかかる時間
+  const wait = reduce ? 0 : Math.max(0, ANIM - (performance.now() - SPLASH_T0));
+  const leave = () => {
+    if(!sp.classList.contains('ready')) return;
+    sp.classList.remove('ready');
     sp.classList.add('out');
     setTimeout(() => sp.remove(), 450);
+  };
+  setTimeout(() => {
+    sp.classList.add('ready');
+    sp.setAttribute('role', 'button');
+    sp.setAttribute('aria-hidden', 'false');
+    sp.setAttribute('tabindex', '0');
+    sp.focus({preventScroll:true});
+    sp.addEventListener('pointerdown', leave, {once:true});
+    sp.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); leave(); } });
   }, wait);
 }
 </script>
