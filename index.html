@@ -74,7 +74,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
 
 /* ---------- スタート画面 ---------- */
 @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-.start{padding:calc(36px + env(safe-area-inset-top)) 0 0;text-align:center;animation:rise .35s ease-out}
+.start{padding:calc(36px + env(safe-area-inset-top)) 0 0;text-align:center;animation:rise .8s ease-out}
 /* 9つの点＝マークシートの一列 */
 .mark{width:min(100%,232px);height:auto;margin:0 auto 20px;display:grid;grid-template-columns:repeat(9,1fr);
   gap:8px;place-items:center}
@@ -343,8 +343,8 @@ footer{margin-top:36px;font-size:11.5px;color:var(--graphite-soft);line-height:1
 @keyframes spFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 #splash{position:fixed;inset:0;z-index:100;background:var(--paper);display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:24px;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
-  transition:opacity .4s ease}
-#splash.out{opacity:0;pointer-events:none}
+  transition:opacity 1s ease-in-out,transform 1s ease-in-out}
+#splash.out{opacity:0;transform:scale(1.03);pointer-events:none}
 #splash.ready{cursor:pointer}
 .sp-tap{position:absolute;bottom:calc(48px + env(safe-area-inset-bottom));font:600 12px/1 var(--ui);letter-spacing:.14em;
   color:var(--graphite-soft);opacity:0;transition:opacity .6s ease}
@@ -1165,8 +1165,8 @@ function dismissSplash(){
   const leave = () => {
     if(!sp.classList.contains('ready')) return;
     sp.classList.remove('ready');
-    sp.classList.add('out');
-    setTimeout(() => sp.remove(), 450);
+    setTimeout(() => sp.classList.add('out'), 250);
+    setTimeout(() => sp.remove(), 1350);
   };
   setTimeout(() => {
     sp.classList.add('ready');
