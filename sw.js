@@ -1,7 +1,7 @@
 /* TOEIC S/A Drill — オフライン用 Service Worker
    キャッシュ優先で配信し、更新があれば裏で取得して次回起動時に反映する。 */
 
-const CACHE = 'toeic-drill-v59';
+const CACHE = 'toeic-drill-v65';
 const ASSETS = [
   './',
   './index.html',
@@ -10,6 +10,7 @@ const ASSETS = [
   './icon-192.png',
   './icon-512.png',
   './icon-512-maskable.png',
+  './bg-home.webp',
   './splash-1125x2436.png',
   './splash-1170x2532.png',
   './splash-1179x2556.png',
@@ -26,7 +27,8 @@ const ASSETS = [
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE)
-      .then(c => c.addAll(ASSETS))
+      // 1つでも取得に失敗すると addAll は全体が失敗するため、個別に入れる
+      .then(c => Promise.all(ASSETS.map(u => c.add(u).catch(() => {}))))
       .then(() => self.skipWaiting())
   );
 });
