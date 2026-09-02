@@ -81,6 +81,12 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
   cursor:pointer;padding:10px 10px;border-radius:8px;transition:background .15s,color .15s}
 .barbtn:hover{color:var(--gold);background:var(--gold-tint)}
 .barbtn:active{opacity:.7}
+.timer{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.06em;
+  color:var(--dropout-deep);background:rgba(132,207,224,.10);border:1px solid rgba(132,207,224,.28);
+  border-radius:99px;padding:4px 11px;margin-left:auto;font-variant-numeric:tabular-nums;
+  white-space:nowrap;transition:color .2s,background .2s,border-color .2s}
+.timer.stopped{color:var(--gold);background:var(--gold-tint);border-color:var(--gold-deep)}
+.timer+.barttl{margin-left:10px}
 .barttl{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--graphite-soft);
   text-transform:uppercase;margin-left:auto;padding-right:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
@@ -664,6 +670,7 @@ function renderBar(){
     bar.innerHTML = '<button class="barbtn" id="toStart">← ホーム</button>'
                   + '<button class="barbtn" id="toMenu">≡ 一覧</button>'
                   + '<button class="barbtn" id="toSearch">検索</button>'
+                  + (isPassage(mode) ? '<span class="timer" id="timer">0:00</span>' : '')
                   + '<span class="barttl">' + cur().label + '　'
                   + (vis.length ? (cursor + 1) + ' / ' + vis.length : '0 / 0') + '</span>';
     $('#toStart').onclick = () => { view = 'start'; render(); };
@@ -1132,6 +1139,32 @@ function cardPart7(q){
   };
 }
 
+/* ========== 所要時間タイマー（Part 7対策・弱点対策） ==========
+   設問が表示された時点から計り始め、解答を開いた時点で止める。 */
+let timerKey = null, timerT0 = 0, timerEnd = 0, timerIv = null;
+
+function fmtElapsed(ms){
+  const s = Math.max(0, Math.floor(ms / 1000));
+  return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+}
+function timerPaint(){
+  const el = document.getElementById('timer');
+  if(!el) return;
+  el.textContent = fmtElapsed((timerEnd || Date.now()) - timerT0);
+  el.classList.toggle('stopped', !!timerEnd);
+}
+function timerSync(){
+  if(timerIv){ clearInterval(timerIv); timerIv = null; }
+  if(!document.getElementById('timer')) return;
+  if(!timerEnd) timerIv = setInterval(timerPaint, 500);
+  timerPaint();
+}
+function timerFor(q){
+  const key = mode + ':' + q.id;
+  if(timerKey !== key){ timerKey = key; timerT0 = Date.now(); timerEnd = 0; }
+  if(revealed && !timerEnd) timerEnd = Date.now();   // 解答を開いた時点で停止
+}
+
 function renderDrill(){
   const vis = visible();
   const main = $('#main');
@@ -1148,6 +1181,7 @@ function renderDrill(){
           : cardFocus(q);
   const noBorder = mode === 'gram';
   const nowMark = marks[mk(mode, q.id)] || '';
+  if(isPassage(mode)) timerFor(q);
 
   main.innerHTML = `
   <article class="card${revealed ? ' open' : ''}" id="card">
@@ -1170,6 +1204,8 @@ function renderDrill(){
     </div>
   </article>
   <p class="swipehint">左右にスワイプして前後の問題へ移動できます</p>`;
+
+  if(isPassage(mode)) timerSync();
 
   $('#toggle').onclick = () => {
     revealed = !revealed;
@@ -1230,6 +1266,7 @@ async function mark(id, v){
 }
 
 function render(){
+  if(timerIv && (view !== 'drill' || !isPassage(mode))){ clearInterval(timerIv); timerIv = null; }
   renderBar();
   document.body.classList.toggle('home', view === 'start');
   if(view !== 'menu') menuJump = null;
