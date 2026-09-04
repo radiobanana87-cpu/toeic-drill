@@ -1,7 +1,7 @@
 /* TOEIC S/A Drill — オフライン用 Service Worker
    キャッシュ優先で配信し、更新があれば裏で取得して次回起動時に反映する。 */
 
-const CACHE = 'toeic-drill-v109';
+const CACHE = 'toeic-drill-v114';
 const ASSETS = [
   './',
   './index.html',
