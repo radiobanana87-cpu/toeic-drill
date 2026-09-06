@@ -94,12 +94,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
 
 /* ---------- スタート画面 ---------- */
 @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-.start{padding:calc(20px + env(safe-area-inset-top)) 0 0;text-align:left;animation:rise .8s ease-out;
+.start{padding:calc(22px + env(safe-area-inset-top)) 0 0;text-align:center;animation:rise .8s ease-out;
   display:flex;flex-direction:column;gap:0;min-height:calc(100svh - 40px)}
-/* 見出し行：左に題名と現在のモード、右に受験日 */
-.hero{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:18px}
-.hero-l{min-width:0}
-.hero-r{flex:0 0 auto}
 /* ホーム画面のときだけ、最背面に書架の写真を敷く */
 #bgphoto,#bgveil{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0;
   transition:opacity .5s ease}
@@ -112,13 +108,13 @@ body.home #bgphoto{opacity:.5}
 body.home #bgveil{opacity:1}
 .wrap{position:relative;z-index:1}
 /* 9つの点＝マークシートの一列 */
-.mark{width:96px;height:auto;margin:0 0 10px;display:grid;grid-template-columns:repeat(9,1fr);
+.mark{width:min(100%,144px);height:auto;margin:0 auto 9px;display:grid;grid-template-columns:repeat(9,1fr);
   gap:8px;place-items:center}
-.mark i{width:6px;height:6px;border-radius:50%;border:1.2px solid var(--gold);display:block;opacity:.35}
-.mark i.f{background:var(--gold);border-color:var(--gold);opacity:1;box-shadow:0 0 0 2.5px var(--gold-tint)}
-.start h1{font-family:var(--ui);font-size:27px;letter-spacing:-.01em;color:var(--ink);
-  margin:0 0 4px;font-weight:800;line-height:1.15}
-.start .lead{font:600 14px/1.4 var(--ui);color:var(--gold);margin:0;letter-spacing:.01em}
+.mark i{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--gold);display:block;opacity:.35}
+.mark i.f{background:var(--gold);border-color:var(--gold);opacity:1;box-shadow:0 0 0 4px var(--gold-tint)}
+.start h1{font-family:var(--mono);font-size:12px;letter-spacing:.32em;text-transform:uppercase;
+  color:var(--gold-deep);margin:0 0 8px;font-weight:600;padding-left:.32em}
+.start .lead{font-size:12px;color:var(--graphite-soft);margin:0 0 8px;line-height:1.6}
 /* 受験日カウントダウン：画面の主役 */
 .cd{display:flex;align-items:baseline;justify-content:center;gap:6px 14px;flex-wrap:wrap;
   font-family:var(--ui);font-size:13px;letter-spacing:.02em;color:var(--graphite-soft);
@@ -153,18 +149,14 @@ body.sorting,body.sorting *{-webkit-user-select:none;user-select:none}
 .modebtn.grab b{color:var(--gold)}
 .modebtn::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--gold);
   transform:scaleY(0);transform-origin:center;transition:transform .18s ease-out}
-.modebtn b{display:block;font:700 17px/1.3 var(--ui);color:var(--ink);letter-spacing:.01em}
-.modebtn .mst{font-family:var(--mono);font-size:11px;letter-spacing:.05em;white-space:nowrap;
-  font-style:normal;color:var(--graphite-soft);margin-left:auto}
-.modebtn .mst.done{color:var(--gold)}
-.modebtn .mst.again{color:var(--again)}
-.modebtn span{display:none}
-.modebtn:hover{border-color:var(--rule-strong)}
-.modebtn:active{transform:scale(.995)}
-.modebtn[aria-pressed="true"]{background:var(--gold-tint);border-color:var(--gold-deep)}
-.modebtn[aria-pressed="true"]::before{transform:scaleX(1)}
+.modebtn b{display:block;font:600 18px/1.35 var(--ui);color:var(--graphite)}
+.modebtn span{font-family:var(--mono);font-size:11.5px;letter-spacing:.05em;white-space:nowrap;opacity:.85}
+.modebtn:hover{background:rgba(255,255,255,.025)}
+.modebtn:active{background:var(--gold-tint)}
+.modebtn[aria-pressed="true"]{background:var(--gold-tint)}
+.modebtn[aria-pressed="true"]::before{transform:scaleY(1)}
 .modebtn[aria-pressed="true"] b{color:var(--gold)}
-.modebtn[aria-pressed="true"]::after{color:var(--gold-deep);opacity:1}
+.modebtn[aria-pressed="true"] span{color:var(--gold-deep)}
 /* 進捗：帯＋凡例 */
 .bar{display:flex;height:6px;border-radius:99px;overflow:hidden;background:var(--paper-3);margin:11px auto 7px;max-width:460px;
   box-shadow:inset 0 0 0 1px var(--rule)}
@@ -408,8 +400,7 @@ footer{margin-top:36px;font-size:11.5px;color:var(--graphite-soft);line-height:1
   .card{padding:20px 18px 18px;border-radius:var(--r-m)}
   .bub{width:32px;height:32px;font-size:11px}
   .modebtn{padding:14px 14px 14px 17px}
-  .modebtn b{font-size:16px}
-  .start h1{font-size:24px}
+  .modebtn b{font-size:16.5px}
   .dockic{width:63px;height:63px;border-radius:20px}
   .dockic svg{width:31px;height:31px}
   .docklb{font-size:10px}
@@ -756,25 +747,18 @@ function renderStart(){
   const keys = (modeOrder && modeOrder.length) ? modeOrder : Object.keys(MODES);
   const modeBtns = keys.map(k => MODES[k]).map(m => {
     const mc = counts(m.key);
-    const doneRate = mc.total ? Math.round(mc.done / mc.total * 100) : 0;
-    const state = mc.again ? '<em class="mst again">要復習 ' + mc.again + '</em>'
-                : mc.done  ? '<em class="mst done">' + doneRate + '%</em>'
-                           : '<em class="mst">' + m.sub + '</em>';
     return '<button class="modebtn" data-m="' + m.key + '" aria-pressed="' + (m.key === mode) + '">'
-         + '<b>' + m.label + '</b>' + state + '<span>' + m.sub + '</span></button>';
+         + '<b>' + m.label + 'モード</b><span>' + m.sub + '</span></button>';
   }).join('');
 
   $('#main').innerHTML = `
   <section class="start">
-    <header class="hero">
-      <div class="hero-l">
-        <div class="mark">${deco}</div>
-        <h1>TOEIC Drill</h1>
-        <p class="lead">${cur().label}</p>
-      </div>
-      <div class="hero-r">${countdownHtml()}</div>
-    </header>
+    <div class="mark">${deco}</div>
+    <h1>TOEIC Drill</h1>
 
+    ${countdownHtml()}
+
+    <p class="lead">${cur().desc}</p>
     <div class="modesel" id="modesel">${modeBtns}</div>
 
     <div class="bar">
