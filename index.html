@@ -210,6 +210,16 @@ body.sorting,body.sorting *{-webkit-user-select:none;user-select:none}
 
 /* ---------- メニュー ---------- */
 .sect{margin-bottom:34px;animation:rise .3s ease-out}
+.tstat{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:10px;margin:2px 0 14px}
+.tstat>div{background:var(--paper-2);border:1px solid var(--rule);border-radius:var(--r-m);padding:10px 12px}
+.tstat span{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--graphite-soft);margin-bottom:5px}
+.tstat b{font:400 22px/1 var(--book);color:var(--gold);font-variant-numeric:tabular-nums lining-nums}
+.tweek{display:flex;align-items:flex-end;gap:8px;height:64px;padding:0 2px}
+.tcol{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px}
+.tcol i{display:block;width:100%;max-width:26px;border-radius:3px;background:var(--paper-3);box-shadow:inset 0 0 0 1px var(--rule)}
+.tcol i.on{background:var(--gold);box-shadow:none}
+.tcol span{font-family:var(--mono);font-size:10px;color:var(--graphite-soft)}
+.thint{font-size:11.5px;color:var(--graphite-soft);margin:12px 0 0;line-height:1.65}
 .sect h2{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;
   color:var(--dropout-deep);margin:0 0 14px;font-weight:700;display:flex;align-items:center;gap:10px}
 .sect h2::after{content:"";flex:1;height:1px;background:var(--rule)}
@@ -529,7 +539,8 @@ const KEY_MARKS = 'toeic_sa_drill_v1';
 const KEY_POS   = 'toeic_sa_drill_pos';
 const KEY_EXAM  = 'toeic_sa_drill_exam';
 const KEY_DOCK  = 'toeic_sa_drill_dock';
-const KEY_MODEORDER = 'toeic_sa_drill_modeorder2';   // 既定の並びを変更したため鍵を新しくする
+const KEY_MODEORDER = 'toeic_sa_drill_modeorder2';
+const KEY_TIME  = 'toeic_sa_drill_time';   // 学習時間（日付ごとの秒数）   // 既定の並びを変更したため鍵を新しくする
 
 /* ---- 状態 ---- */
 let marks = {};                 // { "read:12":"done", "gram:5":"again" }
@@ -886,6 +897,73 @@ function bindModeReorder(){
   window.addEventListener('pointerup', window.__modeUpHandler);
 }
 
+/* ========== 学習時間の記録 ==========
+   問題を解いている画面が表示されている間だけ数える。
+   別の画面へ移ったとき、アプリを閉じたとき、
+   操作が3分以上ないときは止める。 */
+let timeLog = {};            // { '2026-09-09': 秒数, ... }
+let tickIv = null, lastInput = 0, unsaved = 0;
+
+const today = () => {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+};
+function noteInput(){ lastInput = Date.now(); }
+async function flushTime(){
+  if(unsaved <= 0) return;
+  unsaved = 0;
+  await Store.save(KEY_TIME, timeLog);
+}
+function tick(){
+  if(view !== 'drill' || document.visibilityState !== 'visible') return;
+  if(Date.now() - lastInput > 180000) return;     // 3分以上操作がなければ数えない
+  const k = today();
+  timeLog[k] = (timeLog[k] || 0) + 5;
+  unsaved += 5;
+  if(unsaved >= 30) flushTime();                  // 30秒ぶんたまったら保存する
+}
+function startClock(){
+  if(tickIv) return;
+  noteInput();
+  tickIv = setInterval(tick, 5000);
+  ['pointerdown','keydown','scroll'].forEach(t =>
+    window.addEventListener(t, noteInput, {passive:true}));
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState === 'visible') noteInput(); else flushTime();
+  });
+  window.addEventListener('pagehide', flushTime);
+}
+/* 表示用：秒を「◯時間◯分」に整える */
+function fmtDur(sec){
+  if(sec < 60) return sec + '秒';
+  const h = Math.floor(sec / 3600), m = Math.round((sec % 3600) / 60);
+  return h ? h + '時間' + (m ? m + '分' : '') : m + '分';
+}
+function timeStats(){
+  const keys = Object.keys(timeLog).sort();
+  const total = keys.reduce((n, k) => n + timeLog[k], 0);
+  const t = today();
+  const week = [];
+  for(let i = 6; i >= 0; i--){
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const k = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    week.push({k, sec: timeLog[k] || 0, label: '日月火水木金土'[d.getDay()]});
+  }
+  // 連続日数（今日から遡って、記録のある日が続いた数）
+  let streak = 0;
+  for(let i = 0; ; i++){
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const k = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    if(timeLog[k]) streak++;
+    else if(i > 0) break;      // 今日はまだ0でも連続が切れたとはみなさない
+    else continue;
+    if(i > 400) break;
+  }
+  return {total, todaySec: timeLog[t] || 0,
+          weekSec: week.reduce((n, w) => n + w.sec, 0),
+          days: keys.filter(k => timeLog[k] > 0).length, week, streak};
+}
+
 /* ドラッグ中はブラウザの既定のスクロールを止める。
    touch-action を後から変えても進行中の指の動きには効かないため、
    passive:false の touchmove で明示的に打ち消す。 */
@@ -1101,11 +1179,31 @@ function renderMenu(){
   </section>
 
   <section class="sect">
+    <h2>学習時間</h2>
+    ${(() => {
+      const st = timeStats();
+      const max = Math.max(1, ...st.week.map(w => w.sec));
+      return `<div class="tstat">
+          <div><span>総学習時間</span><b>${fmtDur(st.total)}</b></div>
+          <div><span>今日</span><b>${fmtDur(st.todaySec)}</b></div>
+          <div><span>直近7日</span><b>${fmtDur(st.weekSec)}</b></div>
+          <div><span>学習した日</span><b>${st.days}日</b></div>
+          <div><span>連続</span><b>${st.streak}日</b></div>
+        </div>
+        <div class="tweek">${st.week.map(w =>
+          `<div class="tcol"><i style="height:${Math.max(3, Math.round(w.sec / max * 46))}px"
+             class="${w.sec ? 'on' : ''}"></i><span>${w.label}</span></div>`).join('')}</div>
+        <p class="thint">問題を解いている画面が開いている間だけ数えます。3分以上操作がないときは止まります。</p>`;
+    })()}
+  </section>
+
+  <section class="sect">
     <h2>学習記録</h2>
     <div class="row">
       <button class="ghost" id="export">記録を書き出す</button>
       <button class="ghost" id="import">記録を読み込む</button>
       <button class="ghost" id="reset">このモードの記録を消す</button>
+      <button class="ghost" id="resetTime">学習時間を消す</button>
     </div>
   </section>
 
@@ -1155,6 +1253,13 @@ function renderMenu(){
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   };
   $('#import').onclick = () => $('#importFile').click();
+  const rt = $('#resetTime');
+  if(rt) rt.onclick = async () => {
+    if(!confirm('学習時間の記録をすべて消します。よろしいですか。')) return;
+    timeLog = {}; unsaved = 0;
+    await Store.save(KEY_TIME, timeLog);
+    render();
+  };
   $('#reset').onclick = async () => {
     if(!confirm(cur().label + 'モードの記録をすべて消します。よろしいですか？')) return;
     for(const id of NATURAL[mode]) delete marks[mk(mode, id)];
@@ -1594,6 +1699,8 @@ if('serviceWorker' in navigator){
   examDate = await Store.load(KEY_EXAM, null);
   const pos = await Store.load(KEY_POS, null);
   if(pos && MODES[pos.mode]) mode = pos.mode;
+  timeLog = await Store.load(KEY_TIME, {}) || {};
+  startClock();
   const savedOrder = await Store.load(KEY_MODEORDER, null);
   if(Array.isArray(savedOrder)){
     const keep = savedOrder.filter(k => k in MODES);
